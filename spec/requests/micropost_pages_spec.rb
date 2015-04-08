@@ -40,4 +40,55 @@ describe "Micropost pages" do
       end
     end
   end
+
+  describe "件数表示" do
+    before { FactoryGirl.create(:micropost, user: user) }
+
+    describe 'ポスト1件の場合' do
+      before { visit root_path }
+      it { should have_content('1　micropost') }
+    end
+
+    describe '2件ポストの場合' do
+      before do
+        FactoryGirl.create(:micropost, user: user)
+        visit root_path
+      end
+      it { should have_content('2　microposts') }
+    end
+  end
+
+
+  describe "pagination" do
+    before do
+      35.times { FactoryGirl.create(:micropost, user: user) }
+      visit root_path
+    end
+    after { user.microposts.delete_all }
+
+    it do
+      should have_selector('div.pagination')
+    end
+
+    it "should list each user" do
+      Micropost.paginate(page: 1).each do |micropost|
+        expect(page).to have_selector("li##{micropost.id}")
+      end
+    end
+  end
+
+  describe "他のユーザーのポスト" do
+    let(:admin) { FactoryGirl.create(:admin) }
+
+    before do
+      FactoryGirl.create(:micropost, user: user)
+      sign_in admin
+      visit user_path(user)
+    end
+
+    it { should_not have_link("delete") }
+
+
+  end
+
 end
